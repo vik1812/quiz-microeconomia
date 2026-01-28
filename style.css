@@ -185,3 +185,8 @@ body{
 .answer {
   color: var(--text) !important;
 }
+
+.card, .card * {
+  color: var(--text);
+}
+.muted { color: var(--muted) !important; }
