@@ -434,8 +434,3 @@ function wireEvents() {
     alert("Errore: " + err.message);
   }
 })();
-
-.answer.selected{
-  border-color: rgba(124,92,255,.75);
-  background: rgba(124,92,255,.14);
-}
