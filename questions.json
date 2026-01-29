@@ -834,7 +834,7 @@
   "choices": [
     "Δx2/Δx1",
     "x1/x2",
-    "Δx2/Δx1",
+    "Δx1/Δx2",
     "Δx2/x1"
   ],
   "answerIndex": 0
