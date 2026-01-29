@@ -196,13 +196,16 @@ function selectAnswer(q, selectedOriginalIndex) {
   if (correct) removeWrongId(q.id);
   else addWrongId(q.id);
 
-  applyAnswerStyles(q);
-
+  // In modalità "instant" mostro corretto/sbagliato SUBITO
   if (session.mode === "instant") {
-  applyAnswerStyles(q);   // mostra giusta/sbagliata + corretta
-  renderFeedback(q);      // mostra spiegazione
-} else {
-  applySelectedOnly(q);   // in modalità esame NON rivelare la soluzione
+    applyAnswerStyles(q);   // mostra giusta/sbagliata + corretta
+    renderFeedback(q);      // mostra spiegazione
+  } else {
+    // In modalità "exam" NON rivelo la soluzione
+    applySelectedOnly(q);
+  }
+
+  els.btnNext.disabled = false;
 }
 
 function applySelectedOnly(q) {
@@ -219,7 +222,6 @@ function applySelectedOnly(q) {
     }
   });
 }
-
   
 function applyAnswerStyles(q) {
   const state = session.answers[q.id];
