@@ -18,6 +18,7 @@ const els = {
   btnRestart: document.getElementById("btn-restart"),
   btnRetryWrong: document.getElementById("btn-retry-wrong"),
   btnReset: document.getElementById("btn-reset"),
+  btnEnd: document.getElementById("btn-end"),
 
   questionText: document.getElementById("question-text"),
   answers: document.getElementById("answers"),
@@ -292,14 +293,27 @@ function renderResult() {
   show(els.result);
 
   const qs = session.questions;
-  let correctCount = 0;
 
-  qs.forEach(q => {
-    if (session.answers[q.id]?.isCorrect) correctCount += 1;
-  });
+let correctCount = 0;
+let answeredCount = 0;
 
-  const total = qs.length;
-  const pct = total ? Math.round((correctCount / total) * 100) : 0;
+qs.forEach(q => {
+  const a = session.answers[q.id];
+  const answered = a?.selectedOriginalIndex !== null && a?.selectedOriginalIndex !== undefined;
+  if (answered) {
+    answeredCount += 1;
+    if (a.isCorrect) correctCount += 1;
+  }
+});
+
+const total = qs.length;
+const pctAnswered = answeredCount ? Math.round((correctCount / answeredCount) * 100) : 0;
+const unanswered = total - answeredCount;
+
+els.resultSummary.textContent =
+  `Corrette: ${correctCount}/${answeredCount} (${pctAnswered}%) — Non risposte: ${unanswered}/${total}.`;
+
+  
 
   els.resultSummary.textContent = `Hai fatto ${correctCount}/${total} (${pct}%).`;
 
@@ -333,8 +347,19 @@ function renderResult() {
     row.appendChild(tag1);
 
     const tag2 = document.createElement("span");
-    tag2.className = "tag " + (state?.isCorrect ? "good" : "bad");
-    tag2.textContent = state?.isCorrect ? "Corretto" : "Sbagliato";
+   const answered = state?.selectedOriginalIndex !== null && state?.selectedOriginalIndex !== undefined;
+
+if (!answered) {
+  tag2.className = "tag";
+  tag2.textContent = "Non risposto";
+} else if (state.isCorrect) {
+  tag2.className = "tag good";
+  tag2.textContent = "Corretto";
+} else {
+  tag2.className = "tag bad";
+  tag2.textContent = "Sbagliato";
+}
+
     row.appendChild(tag2);
 
     div.appendChild(row);
@@ -417,6 +442,21 @@ function wireEvents() {
     show(els.home);
   });
 
+  els.btnEnd.addEventListener("click", () => {
+  if (!session) return;
+
+  const answeredCount = session.questions.filter(q =>
+    session.answers[q.id]?.selectedOriginalIndex !== null &&
+    session.answers[q.id]?.selectedOriginalIndex !== undefined
+  ).length;
+
+  const ok = confirm(`Terminare la sessione?\nRisposte date: ${answeredCount}/${session.questions.length}`);
+  if (!ok) return;
+
+  renderResult();
+});
+  
+  
   els.btnReset.addEventListener("click", () => {
     // reset solo sessione e wrong list
     setWrongIds([]);
