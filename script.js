@@ -162,12 +162,9 @@ function renderQuestion() {
     btn.type = "button";
     btn.textContent = c.text;
 
-    if (answered) btn.classList.add("locked");
-
     btn.addEventListener("click", () => {
-      if (session.answers[q.id].selectedOriginalIndex !== null) return;
-      selectAnswer(q, c.originalIndex, mappedIndex);
-    });
+  selectAnswer(q, c.originalIndex);
+});
 
     els.answers.appendChild(btn);
   });
@@ -192,31 +189,33 @@ function selectAnswer(q, selectedOriginalIndex) {
   session.answers[q.id].selectedOriginalIndex = selectedOriginalIndex;
   session.answers[q.id].isCorrect = correct;
 
-  // gestisci "wrong list" persistente
+  // aggiorna wrong list persistente
   if (correct) removeWrongId(q.id);
   else addWrongId(q.id);
 
-  // In modalità "instant" mostro corretto/sbagliato SUBITO
+  // aggiorna UI (ogni click)
   if (session.mode === "instant") {
-    applyAnswerStyles(q);   // mostra giusta/sbagliata + corretta
-    renderFeedback(q);      // mostra spiegazione
+    applyAnswerStyles(q);
+    renderFeedback(q);
   } else {
-    // In modalità "exam" NON rivelo la soluzione
     applySelectedOnly(q);
   }
 
   els.btnNext.disabled = false;
 }
 
+
 function applySelectedOnly(q) {
   const state = session.answers[q.id];
   const mapped = state.mappedChoices;
   const buttons = [...els.answers.querySelectorAll(".answer")];
 
-  buttons.forEach((btn, mappedIndex) => {
-    btn.classList.add("locked");
-    const originalIndex = mapped[mappedIndex].originalIndex;
+  buttons.forEach((btn) => {
+    btn.classList.remove("correct", "wrong", "selected");
+  });
 
+  buttons.forEach((btn, mappedIndex) => {
+    const originalIndex = mapped[mappedIndex].originalIndex;
     if (state.selectedOriginalIndex === originalIndex) {
       btn.classList.add("selected");
     }
@@ -229,16 +228,24 @@ function applyAnswerStyles(q) {
 
   const buttons = [...els.answers.querySelectorAll(".answer")];
 
+  // reset classi prima di rimetterle (così funziona anche quando cambi risposta)
+  buttons.forEach((btn) => {
+    btn.classList.remove("correct", "wrong", "selected");
+  });
+
   buttons.forEach((btn, mappedIndex) => {
-    btn.classList.add("locked");
     const originalIndex = mapped[mappedIndex].originalIndex;
 
     if (originalIndex === q.answerIndex) btn.classList.add("correct");
     if (state.selectedOriginalIndex === originalIndex && originalIndex !== q.answerIndex) {
       btn.classList.add("wrong");
     }
+    if (state.selectedOriginalIndex === originalIndex) {
+      btn.classList.add("selected"); // evidenzia anche la selezione
+    }
   });
 }
+
 
 function renderFeedback(q) {
   const state = session.answers[q.id];
