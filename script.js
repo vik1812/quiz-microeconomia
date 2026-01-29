@@ -100,7 +100,7 @@ function buildSession({ count, mode, shuffleAnswers, onlyWrong }) {
 
   if (onlyWrong) {
     const wrongIds = new Set(getWrongIds());
-    const filtered = pool.filter(q => wrongIds.has(q.id));
+    const filtered = pool.filter((q) => wrongIds.has(q.id));
     if (filtered.length > 0) pool = filtered; // se vuoto, fallback al pool intero
   }
 
@@ -112,8 +112,7 @@ function buildSession({ count, mode, shuffleAnswers, onlyWrong }) {
     shuffleAnswers,
     questions: picked,
     index: 0,
-    // answers: { [id]: { selectedIndex, isCorrect, mappedChoices } }
-    answers: {},
+    answers: {}, // { [id]: { selectedOriginalIndex, isCorrect, mappedChoices } }
   };
 }
 
@@ -148,24 +147,26 @@ function renderQuestion() {
     session.answers[q.id] = {
       selectedOriginalIndex: null,
       isCorrect: null,
-      mappedChoices: mapped
+      mappedChoices: mapped,
     };
   } else {
     session.answers[q.id].mappedChoices = mapped;
   }
 
   const state = session.answers[q.id];
-  const answered = state.selectedOriginalIndex !== null;
+  const answered =
+    state.selectedOriginalIndex !== null && state.selectedOriginalIndex !== undefined;
 
-  mapped.forEach((c, mappedIndex) => {
+  mapped.forEach((c) => {
     const btn = document.createElement("button");
     btn.className = "answer";
     btn.type = "button";
     btn.textContent = c.text;
 
+    // ✅ Permetti di cambiare risposta finché non premi "Avanti"
     btn.addEventListener("click", () => {
-  selectAnswer(q, c.originalIndex);
-});
+      selectAnswer(q, c.originalIndex);
+    });
 
     els.answers.appendChild(btn);
   });
@@ -173,15 +174,15 @@ function renderQuestion() {
   els.btnPrev.disabled = session.index === 0;
   els.btnNext.disabled = !answered;
 
-  // Se già risposto e stai tornando indietro, re-render feedback/markers
+  // Se già risposto e stai tornando indietro, re-render markers
   if (answered) {
-  if (session.mode === "instant") {
-    applyAnswerStyles(q);
-    renderFeedback(q);
-  } else {
-    applySelectedOnly(q);
+    if (session.mode === "instant") {
+      applyAnswerStyles(q);
+      renderFeedback(q);
+    } else {
+      applySelectedOnly(q);
+    }
   }
-}
 }
 
 function selectAnswer(q, selectedOriginalIndex) {
@@ -205,7 +206,6 @@ function selectAnswer(q, selectedOriginalIndex) {
   els.btnNext.disabled = false;
 }
 
-
 function applySelectedOnly(q) {
   const state = session.answers[q.id];
   const mapped = state.mappedChoices;
@@ -222,11 +222,10 @@ function applySelectedOnly(q) {
     }
   });
 }
-  
+
 function applyAnswerStyles(q) {
   const state = session.answers[q.id];
   const mapped = state.mappedChoices;
-
   const buttons = [...els.answers.querySelectorAll(".answer")];
 
   // reset classi prima di rimetterle (così funziona anche quando cambi risposta)
@@ -238,15 +237,17 @@ function applyAnswerStyles(q) {
     const originalIndex = mapped[mappedIndex].originalIndex;
 
     if (originalIndex === q.answerIndex) btn.classList.add("correct");
-    if (state.selectedOriginalIndex === originalIndex && originalIndex !== q.answerIndex) {
+    if (
+      state.selectedOriginalIndex === originalIndex &&
+      originalIndex !== q.answerIndex
+    ) {
       btn.classList.add("wrong");
     }
     if (state.selectedOriginalIndex === originalIndex) {
-      btn.classList.add("selected"); // evidenzia anche la selezione
+      btn.classList.add("selected");
     }
   });
 }
-
 
 function renderFeedback(q) {
   const state = session.answers[q.id];
@@ -298,9 +299,10 @@ function renderResult() {
   let correctCount = 0;
   let answeredCount = 0;
 
-  qs.forEach(q => {
+  qs.forEach((q) => {
     const a = session.answers[q.id];
-    const answered = a?.selectedOriginalIndex !== null && a?.selectedOriginalIndex !== undefined;
+    const answered =
+      a?.selectedOriginalIndex !== null && a?.selectedOriginalIndex !== undefined;
     if (answered) {
       answeredCount += 1;
       if (a.isCorrect) correctCount += 1;
@@ -308,25 +310,29 @@ function renderResult() {
   });
 
   const total = qs.length;
-  const pctAnswered = answeredCount ? Math.round((correctCount / answeredCount) * 100) : 0;
+  const pctAnswered = answeredCount
+    ? Math.round((correctCount / answeredCount) * 100)
+    : 0;
   const unanswered = total - answeredCount;
 
-  els.resultSummary.textContent =
-    `Corrette: ${correctCount}/${answeredCount} (${pctAnswered}%) — Non risposte: ${unanswered}/${total}.`;
+  els.resultSummary.textContent = `Corrette: ${correctCount}/${answeredCount} (${pctAnswered}%) — Non risposte: ${unanswered}/${total}.`;
 
   // Pulsante "Ripeti sbagliate" solo se ne hai
-  const wrong = qs.filter(q => session.answers[q.id]?.isCorrect === false);
-  if (wrong.length > 0) {
-    els.btnRetryWrong.classList.remove("hidden");
-  } else {
-    els.btnRetryWrong.classList.add("hidden");
+  const wrong = qs.filter((q) => session.answers[q.id]?.isCorrect === false);
+  if (els.btnRetryWrong) {
+    if (wrong.length > 0) els.btnRetryWrong.classList.remove("hidden");
+    else els.btnRetryWrong.classList.add("hidden");
   }
 
   // Review (lista completa)
   els.review.innerHTML = "";
 
   qs.forEach((q, i) => {
-    const state = session.answers[q.id] ?? { selectedOriginalIndex: null, isCorrect: null };
+    const state = session.answers[q.id] ?? {
+      selectedOriginalIndex: null,
+      isCorrect: null,
+      mappedChoices: null,
+    };
 
     const div = document.createElement("div");
     div.className = "review-item";
@@ -345,7 +351,9 @@ function renderResult() {
     row.appendChild(tag1);
 
     const tag2 = document.createElement("span");
-    const answered = state.selectedOriginalIndex !== null && state.selectedOriginalIndex !== undefined;
+    const answered =
+      state.selectedOriginalIndex !== null &&
+      state.selectedOriginalIndex !== undefined;
 
     if (!answered) {
       tag2.className = "tag";
@@ -364,7 +372,8 @@ function renderResult() {
     const your = document.createElement("div");
     your.className = "muted";
     const yourIdx = state.selectedOriginalIndex;
-    const yourText = (yourIdx === null || yourIdx === undefined) ? "—" : q.choices[yourIdx];
+    const yourText =
+      yourIdx === null || yourIdx === undefined ? "—" : q.choices[yourIdx];
     your.textContent = `Tua risposta: ${yourText}`;
     div.appendChild(your);
 
@@ -384,7 +393,6 @@ function renderResult() {
   });
 }
 
-
 async function loadQuestions() {
   const res = await fetch("questions.json", { cache: "no-store" });
   if (!res.ok) throw new Error("Impossibile caricare questions.json");
@@ -396,7 +404,9 @@ async function loadQuestions() {
   data.forEach((q, idx) => {
     if (!q.id) q.id = `q_${idx + 1}`;
     if (!q.question || !Array.isArray(q.choices) || typeof q.answerIndex !== "number") {
-      throw new Error(`Domanda non valida (indice ${idx}). Controlla question, choices, answerIndex.`);
+      throw new Error(
+        `Domanda non valida (indice ${idx}). Controlla question, choices, answerIndex.`
+      );
     }
   });
 
@@ -411,13 +421,12 @@ function resetAll() {
 function wireEvents() {
   els.btnStart.addEventListener("click", () => {
     const count = clampInt(els.inputCount.value, 1, 9999);
-    const mode = els.selectMode.value;
+    const mode = els.selectMode.value; // "instant" | "exam"
     const shuffleAnswers = els.checkShuffle.checked;
     const onlyWrong = els.checkOnlyWrong.checked;
 
     session = buildSession({ count, mode, shuffleAnswers, onlyWrong });
 
-    // Se pool vuoto
     if (session.questions.length === 0) {
       alert("Non ci sono domande disponibili. Controlla questions.json.");
       return;
@@ -434,29 +443,33 @@ function wireEvents() {
     show(els.home);
   });
 
-  els.btnRetryWrong.addEventListener("click", () => {
-    // avvia sessione ripeti sbagliate (usando wrongIds)
-    els.checkOnlyWrong.checked = true;
-    show(els.home);
-  });
+  if (els.btnRetryWrong) {
+    els.btnRetryWrong.addEventListener("click", () => {
+      // avvia sessione ripeti sbagliate (usando wrongIds)
+      els.checkOnlyWrong.checked = true;
+      show(els.home);
+    });
+  }
 
-  els.btnEnd.addEventListener("click", () => {
-  if (!session) return;
+  if (els.btnEnd) {
+    els.btnEnd.addEventListener("click", () => {
+      if (!session) return;
 
-  const answeredCount = session.questions.filter(q =>
-    session.answers[q.id]?.selectedOriginalIndex !== null &&
-    session.answers[q.id]?.selectedOriginalIndex !== undefined
-  ).length;
+      const answeredCount = session.questions.filter((q) => {
+        const a = session.answers[q.id];
+        return a?.selectedOriginalIndex !== null && a?.selectedOriginalIndex !== undefined;
+      }).length;
 
-  const ok = confirm(`Terminare la sessione?\nRisposte date: ${answeredCount}/${session.questions.length}`);
-  if (!ok) return;
+      const ok = confirm(
+        `Terminare la sessione?\nRisposte date: ${answeredCount}/${session.questions.length}`
+      );
+      if (!ok) return;
 
-  renderResult();
-});
-  
-  
+      renderResult();
+    });
+  }
+
   els.btnReset.addEventListener("click", () => {
-    // reset solo sessione e wrong list
     setWrongIds([]);
     resetAll();
     alert("Reset completato: sessione e lista sbagliate azzerate.");
