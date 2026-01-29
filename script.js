@@ -294,28 +294,25 @@ function renderResult() {
 
   const qs = session.questions;
 
-let correctCount = 0;
-let answeredCount = 0;
+  // Punteggio (gestisce sessione terminata prima)
+  let correctCount = 0;
+  let answeredCount = 0;
 
-qs.forEach(q => {
-  const a = session.answers[q.id];
-  const answered = a?.selectedOriginalIndex !== null && a?.selectedOriginalIndex !== undefined;
-  if (answered) {
-    answeredCount += 1;
-    if (a.isCorrect) correctCount += 1;
-  }
-});
+  qs.forEach(q => {
+    const a = session.answers[q.id];
+    const answered = a?.selectedOriginalIndex !== null && a?.selectedOriginalIndex !== undefined;
+    if (answered) {
+      answeredCount += 1;
+      if (a.isCorrect) correctCount += 1;
+    }
+  });
 
-const total = qs.length;
-const pctAnswered = answeredCount ? Math.round((correctCount / answeredCount) * 100) : 0;
-const unanswered = total - answeredCount;
+  const total = qs.length;
+  const pctAnswered = answeredCount ? Math.round((correctCount / answeredCount) * 100) : 0;
+  const unanswered = total - answeredCount;
 
-els.resultSummary.textContent =
-  `Corrette: ${correctCount}/${answeredCount} (${pctAnswered}%) — Non risposte: ${unanswered}/${total}.`;
-
-  
-
-  els.resultSummary.textContent = `Hai fatto ${correctCount}/${total} (${pct}%).`;
+  els.resultSummary.textContent =
+    `Corrette: ${correctCount}/${answeredCount} (${pctAnswered}%) — Non risposte: ${unanswered}/${total}.`;
 
   // Pulsante "Ripeti sbagliate" solo se ne hai
   const wrong = qs.filter(q => session.answers[q.id]?.isCorrect === false);
@@ -325,13 +322,10 @@ els.resultSummary.textContent =
     els.btnRetryWrong.classList.add("hidden");
   }
 
-  // Review
+  // Review (lista completa)
   els.review.innerHTML = "";
 
-  const qs = session.questions;
-
   qs.forEach((q, i) => {
-    // state può mancare se non hai mai aperto quella domanda
     const state = session.answers[q.id] ?? { selectedOriginalIndex: null, isCorrect: null };
 
     const div = document.createElement("div");
@@ -388,6 +382,7 @@ els.resultSummary.textContent =
 
     els.review.appendChild(div);
   });
+}
 
 
 async function loadQuestions() {
