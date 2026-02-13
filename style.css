@@ -267,3 +267,14 @@ button:disabled{
   gap:10px;
   margin-bottom: 10px;
 }
+
+.answer{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+}
+
+.answer .letter{
+  font-weight:800;
+  min-width:24px;
+}
