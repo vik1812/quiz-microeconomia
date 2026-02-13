@@ -167,8 +167,8 @@ button:disabled{
 }
 
 .answers{
-  display:grid;
-  grid-template-columns: 1fr;
+  display:flex;
+  flex-direction:column;
   gap:10px;
 }
 
@@ -266,9 +266,4 @@ button:disabled{
   justify-content:space-between;
   gap:10px;
   margin-bottom: 10px;
-}
-
-/* Responsive */
-@media (min-width: 820px){
-  .answers{ grid-template-columns: 1fr 1fr; }
 }
