@@ -169,11 +169,13 @@ function renderQuestion() {
   const answered =
     state.selectedOriginalIndex !== null && state.selectedOriginalIndex !== undefined;
 
-  mapped.forEach((c) => {
-    const btn = document.createElement("button");
-    btn.className = "answer";
-    btn.type = "button";
-    btn.textContent = c.text;
+  mapped.forEach((c, index) => {
+  const btn = document.createElement("button");
+  btn.className = "answer";
+  btn.type = "button";
+
+  const letters = ["A", "B", "C", "D"];
+  btn.innerHTML = `<span class="letter">${letters[index]}.</span> ${c.text}`;
 
     // ✅ Permetti di cambiare risposta finché non premi "Avanti"
     btn.addEventListener("click", () => {
